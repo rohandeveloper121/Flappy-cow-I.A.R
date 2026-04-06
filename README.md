@@ -1,0 +1,144 @@
+<!DOCTYPE html><html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cow Flappy Game</title>
+<style>
+  body { margin:0; overflow:hidden; background:#000; }
+  canvas { display:block; }
+</style>
+</head>
+<body>
+<canvas id="gameCanvas"></canvas><script>
+const canvas = document.getElementById("gameCanvas");
+const ctx = canvas.getContext("2d");
+
+function resizeCanvas(){
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+}
+resizeCanvas();
+window.addEventListener("resize", resizeCanvas);
+
+let cow, pipes, frame, score, gameOver, win;
+
+function resetGame(){
+  cow = {
+    x: 80,
+    y: 200,
+    width: 60,
+    height: 60,
+    gravity: 0.4,
+    lift: -8, // 20% less jump
+    velocity: 0
+  };
+  pipes = [];
+  frame = 0;
+  score = 0;
+  gameOver = false;
+  win = false;
+}
+resetGame();
+
+let pipeWidth = 70;
+let gap = 198;
+
+function drawCow(){
+  ctx.save();
+  ctx.font = "bold 56px Arial";
+  ctx.textBaseline = "top";
+  ctx.shadowColor = "white";
+  ctx.shadowBlur = 10;
+  ctx.fillText("🐄", cow.x, cow.y);
+  ctx.restore();
+}
+
+function drawPipes(){
+  ctx.fillStyle = "white";
+  pipes.forEach(pipe=>{
+    ctx.fillRect(pipe.x,0,pipeWidth,pipe.top);
+    ctx.fillRect(pipe.x,canvas.height-pipe.bottom,pipeWidth,pipe.bottom);
+  });
+}
+
+function updatePipes(){
+  if(frame % 110 === 0){
+    let top = Math.random()*(canvas.height/2);
+    let bottom = canvas.height - top - gap;
+    pipes.push({x:canvas.width, top:top, bottom:bottom});
+  }
+
+  pipes.forEach(pipe=>{
+    pipe.x -= 2.53;
+    if(cow.x < pipe.x + pipeWidth && cow.x + cow.width > pipe.x && (cow.y < pipe.top || cow.y + cow.height > canvas.height - pipe.bottom)){
+      gameOver = true;
+    }
+    if(pipe.x + pipeWidth < cow.x && !pipe.passed){
+      score++;
+      pipe.passed = true;
+    }
+  });
+
+  pipes = pipes.filter(p=>p.x+pipeWidth>0);
+}
+
+function updateCow(){
+  cow.velocity += cow.gravity;
+  cow.y += cow.velocity;
+  if(cow.y + cow.height > canvas.height || cow.y < 0){ gameOver = true; }
+}
+
+function drawScore(){
+  ctx.fillStyle = "white";
+  ctx.font = "bold 26px Arial";
+  ctx.fillText("Score: " + score, canvas.width/2 - 70, 40);
+}
+
+function drawBackgroundText(){
+  ctx.fillStyle = "rgba(255,255,255,0.25)";
+  ctx.font = "bold 16px Arial";
+  ctx.fillText("Develop by Istiak Ahmed Rohan IT", 20, canvas.height - 20);
+}
+
+function drawGameOver(){
+  ctx.fillStyle = "red";
+  ctx.font = "32px Arial";
+  ctx.fillText("Restart haha you lose", canvas.width/2 - 150, canvas.height/2);
+}
+
+function drawWin(){
+  ctx.fillStyle = "lime";
+  ctx.font = "30px Arial";
+  ctx.fillText("Congrats you've completed the game", canvas.width/2 - 230, canvas.height/2);
+  ctx.font = "20px Arial";
+  ctx.fillText("Develop by Rohan", canvas.width/2 - 90, canvas.height/2 + 40);
+}
+
+function gameLoop(){
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  drawBackgroundText();
+  drawCow();
+  drawPipes();
+  drawScore();
+  if(score >= 100){ win = true; }
+  if(!gameOver && !win){
+    updateCow();
+    updatePipes();
+    frame++;
+  } else if(gameOver){ drawGameOver(); }
+  else if(win){ drawWin(); }
+  requestAnimationFrame(gameLoop);
+}
+
+function handleInput(){
+  if(gameOver || win){ resetGame(); }
+  else { cow.velocity = cow.lift; }
+}
+
+window.addEventListener("keydown", handleInput);
+window.addEventListener("click", handleInput);
+window.addEventListener("touchstart", handleInput);
+
+gameLoop();
+</script></body>
+</html>
